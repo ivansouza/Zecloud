@@ -1,364 +1,336 @@
 <!DOCTYPE html>
-<html lang="pt">
+<html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lista de Compras</title>
-    <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Zecloud</title>
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-            background: #f4f5f7;
-            color: #1a1a2e;
-            min-height: 100vh;
-            padding: 16px;
-        }
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
-        .container {
-            max-width: 480px;
-            margin: 0 auto;
-        }
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;700&family=Playfair+Display:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
 
-        h1 {
-            text-align: center;
-            font-size: 1.5rem;
-            color: #2d3436;
-            margin-bottom: 16px;
-        }
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
 
-        /* ---- Input area ---- */
-        .input-area {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 16px;
+<script>
+tailwind.config = {
+  theme: {
+    extend: {
+      fontFamily: {
+        sans: ['Inter', 'sans-serif'],
+        mono: ['JetBrains Mono', 'monospace'],
+        serif: ['Playfair Display', 'serif'],
+      },
+      colors: {
+        aurel: {
+          gold: '#f59e0b',
+          amber: '#fbbf24',
+          cyan: '#38bdf8',
+          violet: '#8b5cf6',
+          rose: '#fb7185',
+          emerald: '#34d399',
         }
+      }
+    }
+  }
+}
+</script>
 
-        .input-area input {
-            flex: 1;
-            padding: 10px 12px;
-            border: 2px solid #dcdde1;
-            border-radius: 8px;
-            font-size: 1rem;
-            outline: none;
-            transition: border-color 0.2s;
-        }
+<style>
+:root {
+  --bg-deep: #03050d;
+  --gold: #f59e0b;
+  --cyan: #38bdf8;
+  --violet: #8b5cf6;
+}
 
-        .input-area input:focus {
-            border-color: #0984e3;
-        }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: 'Inter', sans-serif;
+  color: #e5eefc;
+  background: var(--bg-deep);
+  overflow-x: hidden;
+}
 
-        .btn-add {
-            padding: 10px 16px;
-            background: #0984e3;
-            color: #fff;
-            border: none;
-            border-radius: 8px;
-            font-size: 1rem;
-            cursor: pointer;
-            transition: background 0.2s;
-        }
+/* Cinematic liquid background */
+.liquid-bg {
+  position: fixed;
+  top: 0; left: 0;
+  width: 100vw; height: 100vh;
+  z-index: -1;
+  overflow: hidden;
+}
 
-        .btn-add:hover {
-            background: #0773c5;
-        }
+.liquid-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(80px);
+  opacity: 0.4;
+  animation: liquid 8s ease-in-out infinite;
+}
 
-        /* ---- Item list ---- */
-        .list {
-            list-style: none;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-        }
+.liquid-blob:nth-child(1) {
+  width: 600px; height: 600px;
+  background: radial-gradient(circle, var(--gold), transparent 70%);
+  top: -200px; left: -100px;
+}
 
-        .item {
-            display: flex;
-            align-items: center;
-            gap: 10px;
-            background: #fff;
-            padding: 12px 14px;
-            border-radius: 10px;
-            box-shadow: 0 1px 3px rgba(0,0,0,0.08);
-            animation: slideIn 0.25s ease-out;
-        }
+.liquid-blob:nth-child(2) {
+  width: 500px; height: 500px;
+  background: radial-gradient(circle, var(--cyan), transparent 70%);
+  top: 50%; right: -150px;
+  animation-delay: -2s;
+}
 
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateY(-8px); }
-            to   { opacity: 1; transform: translateY(0); }
-        }
+.liquid-blob:nth-child(3) {
+  width: 400px; height: 400px;
+  background: radial-gradient(circle, var(--violet), transparent 70%);
+  bottom: -100px; left: 30%;
+  animation-delay: -4s;
+}
 
-        .item-label {
-            flex: 1;
-            font-size: 1rem;
-            cursor: default;
-            display: flex;
-            align-items: center;
-            gap: 6px;
-        }
+@keyframes liquid {
+  0%, 100% { transform: translate(0, 0) scale(1); }
+  25% { transform: translate(30px, -30px) scale(1.1); }
+  50% { transform: translate(-20px, 20px) scale(0.9); }
+  75% { transform: translate(20px, 10px) scale(1.05); }
+}
 
-        .item-emoji {
-            font-size: 1.3rem;
-            width: 28px;
-            text-align: center;
-        }
+/* Glassmorphism */
+.glass-premium {
+  background: rgba(10, 15, 31, 0.4);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+  border-radius: 24px;
+}
 
-        .item-text {
-            flex: 2;
-            font-size: 0.95rem;
-            word-break: break-word;
-        }
+.glass-card {
+  background: rgba(15, 23, 42, 0.6);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(148, 163, 184, 0.1);
+  border-radius: 20px;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
 
-        .item-actions {
-            display: flex;
-            gap: 4px;
-            flex-shrink: 0;
-        }
+.glass-card:hover {
+  background: rgba(15, 23, 42, 0.8);
+  border-color: rgba(245, 158, 11, 0.3);
+  transform: translateY(-8px) scale(1.02);
+  box-shadow: 0 32px 96px rgba(0, 0, 0, 0.5), 0 0 30px rgba(245, 158, 11, 0.15);
+}
 
-        .icon-btn {
-            width: 30px;
-            height: 30px;
-            border: none;
-            background: transparent;
-            font-size: 1.1rem;
-            cursor: pointer;
-            border-radius: 6px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: background 0.15s;
-        }
+/* Typography */
+.title-hero {
+  font-family: 'Playfair Display', serif;
+  font-size: clamp(3rem, 8vw, 6rem);
+  font-weight: 700;
+  background: linear-gradient(135deg, #f59e0b 0%, #fbbf24 30%, #38bdf8 60%, #8b5cf6 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  line-height: 1.1;
+  letter-spacing: -0.03em;
+}
 
-        .icon-btn:hover {
-            background: #e2e4e9;
-        }
+.subtitle-hero {
+  font-family: 'Inter', sans-serif;
+  font-size: clamp(1rem, 2.5vw, 1.5rem);
+  font-weight: 300;
+  color: rgba(229, 238, 252, 0.6);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
 
-        .btn-edit {
-            color: #0984e3;
-        }
+.text-muted { color: rgba(229, 238, 252, 0.55); }
 
-        .btn-delete {
-            color: #d63031;
-        }
+/* Gradient buttons */
+.btn-gradient {
+  background: linear-gradient(135deg, var(--gold), var(--cyan));
+  color: #03050d;
+  font-weight: 600;
+  padding: 14px 32px;
+  border-radius: 999px;
+  transition: all 0.3s ease;
+  border: none;
+  cursor: pointer;
+}
 
-        /* ---- Edit mode ---- */
-        .edit-input {
-            flex: 2;
-            padding: 6px 8px;
-            border: 2px solid #0984e3;
-            border-radius: 6px;
-            font-size: 0.95rem;
-            outline: none;
-            background: #fff;
-        }
+.btn-gradient:hover {
+  transform: scale(1.05);
+  box-shadow: 0 0 30px rgba(245, 158, 11, 0.4);
+}
 
-        .edit-input:focus {
-            border-color: #2d3436;
-        }
+/* Grid */
+.projects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
+  gap: 24px;
+}
 
-        /* ---- Empty state ---- */
-        .empty {
-            text-align: center;
-            color: #888;
-            padding: 32px 16px;
-            font-size: 0.9rem;
-        }
-
-        /* ---- Responsive tweaks ---- */
-        @media (max-width: 400px) {
-            body { padding: 12px; }
-            .input-area { flex-wrap: wrap; }
-            .btn-add { width: 100%; }
-        }
-    </style>
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: rgba(245, 158, 11, 0.3); border-radius: 3px; }
+</style>
 </head>
 <body>
-    <div class="container">
-        <h1>🛒 Lista de Compras</h1>
 
-        <!-- Add item -->
-        <div class="input-area">
-            <input type="text" id="itemInput" placeholder="Adicionar um item...">
-            <button class="btn-add" id="btnAdd">+</button>
-        </div>
+<div class="liquid-bg">
+  <div class="liquid-blob"></div>
+  <div class="liquid-blob"></div>
+  <div class="liquid-blob"></div>
+</div>
 
-        <!-- List -->
-        <ul class="list" id="itemList"></ul>
+<!-- Hero -->
+<section class="min-h-screen flex items-center justify-center relative px-4">
+  <div class="text-center max-w-5xl mx-auto">
+    <div class="gsap-fade-up">
+      <p class="subtitle-hero mb-4 tracking-widest">Sandbox na nuvem · Hermes Agent</p>
+      <h1 class="title-hero mb-6">Zecloud</h1>
+      <p class="text-muted text-lg max-w-2xl mx-auto mb-10 leading-relaxed">
+        Laboratório vivo de Ivan Souza na nuvem — cada .html é uma ilha autossuficiente,
+        exploratória, muitas vezes alucinada. Experimentos criados pelo agente Hermes.
+      </p>
+      <div class="flex flex-wrap justify-center gap-4">
+        <a href="#projects" class="btn-gradient">
+          <i class="fas fa-flask mr-2"></i> Explorar Projetos
+        </a>
+        <a href="https://github.com/ivansouza/Zecloud" target="_blank" class="glass-card px-6 py-3 text-sm font-medium hover:border-amber-500/30">
+          <i class="fab fa-github mr-2"></i> GitHub
+        </a>
+      </div>
+    </div>
+  </div>
+
+  <div class="absolute bottom-10 left-1/2 -translate-x-1/2 gsap-fade-up">
+    <div class="w-6 h-10 border-2 border-white/20 rounded-full flex justify-center p-1">
+      <div class="w-1 h-2 bg-amber-500 rounded-full animate-bounce"></div>
+    </div>
+  </div>
+</section>
+
+<!-- Projects -->
+<section id="projects" class="py-24 px-4">
+  <div class="max-w-7xl mx-auto">
+    <div class="text-center mb-16 gsap-fade-up">
+      <h2 class="text-4xl font-bold mb-4 bg-gradient-to-r from-amber-400 to-cyan-400 bg-clip-text text-transparent">
+        Projetos do Zecloud
+      </h2>
+      <p class="text-muted text-lg">Cada HTML é uma ilha — autossuficiente, exploratória, muitas vezes alucinada.</p>
     </div>
 
-    <script>
-        // ---- Emoji categories ----
-        const EMOJIS = {
-            fruit:      '🍎',
-            veggie:     '🥬',
-            dairy:     '🥛',
-            protein:   '🍗',
-            bread:     '🍞',
-            snack:     '🍪',
-            drink:     '🥤',
-            veggie2:   '🥑',
-        };
+    <div id="grid" class="projects-grid"></div>
 
-        // ---- State ----
-        const STORAGE_KEY = 'shopping_list_items';
+    <p id="sync-status" class="text-muted text-xs text-center mt-12"></p>
+  </div>
+</section>
 
-        function loadItems() {
-            try {
-                const raw = localStorage.getItem(STORAGE_KEY);
-                return raw ? JSON.parse(raw) : [];
-            } catch {
-                return [];
-            }
-        }
+<footer class="py-12 px-4 border-t border-white/5">
+  <div class="max-w-7xl mx-auto text-center text-muted text-sm">
+    <p>Zecloud &copy; 2026 — Ivan Souza · Feito com <span class="text-rose-400">♥</span> e Hermes</p>
+  </div>
+</footer>
 
-        function saveItems(items) {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
-        }
+<script>
+const username = 'ivansouza', repo = 'Zecloud';
 
-        // ---- Render ----
-        function render() {
-            const list = document.getElementById('itemList');
-            const items = loadItems();
-            list.innerHTML = '';
+const known = {
+  'lista-compras.html': {
+    icon: 'fa-shopping-cart',
+    name: 'Lista de Compras',
+    sub: 'App web responsivo',
+    desc: 'Lista de compras interativa com adicionar, editar, excluir e marcar itens. Design otimizado para celular.'
+  },
+};
 
-            if (items.length === 0) {
-                list.innerHTML = '<li class="empty">Nenhum item ainda. Adicione um!</li>';
-                return;
-            }
+const ignore = ['index.html'];
+const esc = t => String(t).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
 
-            items.forEach((item, index) => {
-                const li = document.createElement('li');
-                li.className = 'item';
-                li.dataset.index = index;
+function pretty(file) {
+  const b = file.replace(/\.html$/i, '').replace(/[-_]+/g, ' ').trim();
+  return b.charAt(0).toUpperCase() + b.slice(1);
+}
 
-                const emoji = EMOJIS[item.category] || '📝';
-                const text = item.text;
+function card(e) {
+  return `
+    <div class="glass-card p-6 gsap-card">
+      <div class="flex items-start justify-between mb-4">
+        <div class="flex items-center gap-4">
+          <i class="fa ${e.icon || 'fa-cube'} text-4xl"></i>
+          <div>
+            <h3 class="text-xl font-semibold text-white mb-1">${esc(e.name)}</h3>
+            <p class="text-muted text-xs font-mono">${esc(e.sub || '')}</p>
+          </div>
+        </div>
+        ${e.isNew ? '<span style="background:rgba(52,211,153,.15);color:#34d399;font-size:11px;padding:4px 10px;border-radius:999px;font-weight:600">NOVO</span>' : ''}
+      </div>
+      <p class="text-muted text-sm mb-6 leading-relaxed">${esc(e.desc || 'Experimento do laboratório.')}</p>
+      <a href="${encodeURI(e.file)}" target="_blank" class="inline-flex items-center gap-2 text-amber-400 hover:text-amber-300 transition-all text-sm font-medium group">
+        <i class="fas fa-external-link-alt group-hover:translate-x-1 transition-transform"></i> Abrir Experimento
+      </a>
+    </div>`;
+}
 
-                li.innerHTML =
-                    `<span class="item-emoji">${emoji}</span>` +
-                    `<span class="item-label">
-                        <span class="item-text">${escapeHtml(text)}</span>
-                        <button class="icon-btn btn-edit" data-action="edit" data-index="${index}">✏️</button>
-                        <button class="icon-btn btn-delete" data-action="delete" data-index="${index}">🗑️</button>
-                    </span>`;
+let items = Object.entries(known).map(([file, m]) => ({ file, ...m }));
+const grid = document.getElementById('grid'), status = document.getElementById('sync-status');
 
-                list.appendChild(li);
-            });
-        }
+function render() {
+  items.sort((a, b) => (b.ts || 0) - (a.ts || 0) || a.name.localeCompare(b.name));
+  grid.innerHTML = items.map(card).join('');
+  gsap.fromTo('.gsap-card',
+    { opacity: 0, y: 40 },
+    { opacity: 1, y: 0, duration: 0.6, stagger: 0.1, ease: 'power2.out' }
+  );
+}
 
-        function escapeHtml(str) {
-            const div = document.createElement('div');
-            div.textContent = str;
-            return div.innerHTML;
-        }
+async function lastCommit(file) {
+  try {
+    const r = await fetch(`https://api.github.com/repos/${username}/${repo}/commits?path=${encodeURIComponent(file)}&per_page=1`);
+    const c = await r.json();
+    return Array.isArray(c) && c.length ? new Date(c[0].commit.author.date) : null;
+  } catch { return null; }
+}
 
-        // ---- Add ----
-        document.getElementById('btnAdd').addEventListener('click', () => {
-            const input = document.getElementById('itemInput');
-            const text = input.value.trim();
-            if (!text) return;
+async function sync() {
+  try {
+    const r = await fetch(`https://api.github.com/repos/${username}/${repo}/contents`);
+    if (!r.ok) throw new Error(r.status);
+    const files = (await r.json())
+      .filter(i => i.type === 'file' && /\.html$/i.test(i.name) && !ignore.includes(i.name.toLowerCase()))
+      .map(i => i.name);
+    items = items.filter(e => files.includes(e.file));
+    for (const f of files) {
+      if (!items.some(e => e.file === f)) items.push({ file: f, name: pretty(f), sub: 'Adicionado automaticamente' });
+    }
+    await Promise.all(items.map(async e => {
+      const d = await lastCommit(e.file);
+      if (d) { e.ts = d.getTime(); e.date = d.toLocaleDateString('pt-BR'); e.isNew = Date.now() - e.ts < 3 * 864e5; }
+    }));
+    render();
+    status.textContent = `${items.length} projeto${items.length === 1 ? '' : 's'} · sincronizado com o GitHub`;
+  } catch (err) {
+    status.textContent = 'Lista salva localmente';
+    render();
+  }
+}
 
-            const items = loadItems();
-            items.push({
-                text: text,
-                category: pickCategory(text),
-            });
-            saveItems(items);
-            input.value = '';
-            render();
-        });
+gsap.registerPlugin(ScrollTrigger);
 
-        // ---- Edit ----
-        document.getElementById('itemList').addEventListener('click', (e) => {
-            const btn = e.target.closest('button');
-            if (!btn) return;
+gsap.utils.toArray('.gsap-fade-up').forEach(el => {
+  gsap.fromTo(el,
+    { opacity: 0, y: 30 },
+    { opacity: 1, y: 0, duration: 0.8, ease: 'power2.out',
+      scrollTrigger: { trigger: el, start: 'top 85%' } }
+  );
+});
 
-            const index = parseInt(btn.dataset.index, 10);
-            if (isNaN(index)) return;
-
-            if (btn.dataset.action === 'edit') {
-                const list = document.getElementById('itemList');
-                const li = list.children[index];
-                if (!li) return;
-
-                const textSpan = li.querySelector('.item-text');
-                const currentText = textSpan.textContent;
-
-                // Replace label with input
-                const editInput = document.createElement('input');
-                editInput.type = 'text';
-                editInput.className = 'edit-input';
-                editInput.value = currentText;
-                editInput.dataset.index = index;
-
-                textSpan.replaceWith(editInput);
-                editInput.focus();
-
-                // Save on blur or Enter
-                const commitEdit = () => {
-                    const newText = editInput.value.trim();
-                    if (!newText) {
-                        // Cancel: put back original
-                        editInput.value = currentText;
-                        editInput.replaceWith(textSpan);
-                        return;
-                    }
-                    const items = loadItems();
-                    items[index].text = newText;
-                    saveItems(items);
-                    render();
-                };
-
-                editInput.addEventListener('blur', commitEdit);
-                editInput.addEventListener('keydown', (ev) => {
-                    if (ev.key === 'Enter') {
-                        ev.preventDefault();
-                        commitEdit();
-                    }
-                });
-            }
-        });
-
-        // ---- Delete ----
-        document.getElementById('itemList').addEventListener('click', (e) => {
-            const btn = e.target.closest('button');
-            if (!btn) return;
-
-            const index = parseInt(btn.dataset.index, 10);
-            if (isNaN(index)) return;
-
-            if (btn.dataset.action === 'delete') {
-                let items = loadItems();
-                items.splice(index, 1);
-                saveItems(items);
-                render();
-            }
-        });
-
-        // ---- Category picker ----
-        function pickCategory(text) {
-            const lower = text.toLowerCase();
-            if (lower.includes('fruta') || lower.includes('maçã') || lower.includes('banana')) return 'fruit';
-            if (lower.includes('vegetal') || lower.includes('alfaceira') || lower.includes('brócolis')) return 'veggie';
-            if (lower.includes('leite') || lower.includes('iogurte') || lower.includes('queijo')) return 'dairy';
-            if (lower.includes('carne') || lower.includes('frango') || lower.includes('bife')) return 'protein';
-            if (lower.includes('pão') || lower.includes('bolo')) return 'bread';
-            if (lower.includes('doce') || lower.includes('biscoito')) return 'snack';
-            if (lower.includes('bebida') || lower.includes('suco')) return 'drink';
-            return 'veggie2'; // default
-        }
-
-        // ---- Enter key to add ----
-        document.getElementById('itemInput').addEventListener('keydown', (e) => {
-            if (e.key === 'Enter') {
-                e.preventDefault();
-                document.getElementById('btnAdd').click();
-            }
-        });
-
-        // ---- Initial render ----
-        render();
-    </script>
+render();
+sync();
+</script>
 </body>
 </html>
-
-<footer style="text-align:center; margin-top:24px; color:#888; font-size:0.9rem;">Feito pelo Hermes</footer>
