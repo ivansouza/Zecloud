@@ -120,3 +120,779 @@
 
     <!-- WebGL 2.0 Canvas -->
     <canvas id="glCanvas"></canvas>
+
+    <!-- Top Left HUD: Title, Status & Metrics -->
+    <div class="fixed top-4 left-4 z-20 flex flex-col gap-2 pointer-events-none">
+        <div class="glass-panel px-4 py-2.5 rounded-2xl flex items-center gap-3 pointer-events-auto">
+            <div class="relative flex h-3 w-3">
+                <span id="statusPing" class="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-400 opacity-75"></span>
+                <span id="statusDot" class="relative inline-flex rounded-full h-3 w-3 bg-purple-500"></span>
+            </div>
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="font-bold text-sm sm:text-base tracking-tight bg-gradient-to-r from-purple-300 via-pink-300 to-amber-200 bg-clip-text text-transparent">
+                        CAULDRON
+                    </h1>
+                    <span class="text-[10px] font-mono uppercase px-1.5 py-0.5 rounded bg-purple-500/20 text-purple-300 border border-purple-500/30">
+                        WebGL 2.0
+                    </span>
+                </div>
+                <p class="text-[11px] text-gray-400 hidden sm:block">Arraste para orbitar • Duplo clique reseta a câmera</p>
+            </div>
+        </div>
+
+        <!-- FPS & Resolution Badge -->
+        <div class="flex items-center gap-2">
+            <div class="glass-panel px-3 py-1.5 rounded-xl flex items-center gap-2 text-xs font-mono text-gray-300 pointer-events-auto">
+                <span class="text-purple-400 font-semibold" id="fpsCounter">60</span>
+                <span class="text-gray-500">FPS</span>
+                <span class="text-gray-600">|</span>
+                <span id="resDisplay" class="text-gray-400">0×0</span>
+            </div>
+            <button id="openCodeBtn" class="glass-panel px-3 py-1.5 rounded-xl text-xs font-medium text-purple-300 hover:text-white hover:bg-purple-600/20 hover:border-purple-500/40 transition flex items-center gap-1.5 pointer-events-auto cursor-pointer">
+                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4"></path>
+                </svg>
+                <span>Ver Código GLSL</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- Toggle Button for Control Panel when Collapsed -->
+    <button id="togglePanelBtn" class="fixed top-4 right-4 z-30 glass-panel p-2.5 rounded-2xl text-gray-200 hover:text-white hover:border-purple-500/50 transition shadow-lg flex items-center gap-2 cursor-pointer" title="Alternar Painel de Controle">
+        <svg id="panelToggleIcon" class="w-5 h-5 text-purple-400 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6V4m0 2a2 2 0 100 4m0-4a2 2 0 110 4m-6 8a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4m6 6v10m6-2a2 2 0 100-4m0 4a2 2 0 110-4m0 4v2m0-6V4"></path>
+        </svg>
+        <span class="text-xs font-semibold pr-1 hidden sm:inline" id="togglePanelText">Ocultar Painel</span>
+    </button>
+
+    <!-- Main Control Panel ("Painel de Controle") -->
+    <aside id="controlPanel" class="fixed top-16 right-4 z-20 w-[calc(100vw-2rem)] sm:w-80 max-h-[calc(100vh-5.5rem)] glass-panel rounded-2xl flex flex-col overflow-hidden transition-all duration-300 origin-top-right">
+        
+        <!-- Panel Header -->
+        <div class="px-4 py-3 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+            <div class="flex items-center gap-2">
+                <svg class="w-4 h-4 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724
+0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <h2 class="text-xs font-bold uppercase tracking-wider text-gray-200">Painel de Controle</h2>
+            </div>
+            <div class="flex items-center gap-1.5">
+                <button id="playPauseBtn" class="px-2.5 py-1 rounded-lg bg-purple-500/20 hover:bg-purple-500/30 border border-purple-500/30 text-purple-300 text-xs font-medium flex items-center gap-1 transition cursor-pointer" title="Pausar/Continuar Animação">
+                    <span id="playPauseIcon">⏸</span>
+                    <span id="playPauseText">Pausar</span>
+                </button>
+                <button id="resetBtn" class="p-1.5 rounded-lg bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition cursor-pointer" title="Restaurar Padrões">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                    </svg>
+                </button>
+            </div>
+        </div>
+
+        <!-- Scrollable Controls Body -->
+        <div class="p-4 overflow-y-auto space-y-4 text-xs">
+
+            <!-- Resolution Scale Selector -->
+            <div>
+                <div class="flex justify-between items-center mb-1.5">
+                    <span class="text-gray-300 font-medium">Escala de Resolução</span>
+                    <span class="text-[11px] font-mono text-purple-300" id="scaleLabel">0.75x</span>
+                </div>
+                <div class="grid grid-cols-3 gap-1.5 bg-black/40 p-1 rounded-xl border border-white/5">
+                    <button data-scale="0.5" class="scale-btn py-1.5 rounded-lg font-mono text-xs transition text-gray-400 hover:text-white cursor-pointer">0.5x (Rápido)</button>
+                    <button data-scale="0.75" class="scale-btn py-1.5 rounded-lg font-mono text-xs transition bg-purple-600 text-white shadow cursor-pointer">0.75x</button>
+                    <button data-scale="1.0" class="scale-btn py-1.5 rounded-lg font-mono text-xs transition text-gray-400 hover:text-white cursor-pointer">1.0x (Nativo)</button>
+                </div>
+            </div>
+
+            <hr class="border-white/10">
+
+            <!-- Raymarching & Turbulence Parameters -->
+            <div class="space-y-3">
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label for="speedSlider" class="text-gray-300 font-medium">Velocidade do Tempo (T)</label>
+                        <span id="speedVal" class="font-mono text-purple-300">1.00x</span>
+                    </div>
+                    <input id="speedSlider" type="range" min="-2.0" max="3.0" step="0.05" value="1.0">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label for="stepsSlider" class="text-gray-300 font-medium">Passos de Raymarching (@)</label>
+                        <span id="stepsVal" class="font-mono text-purple-300">40</span>
+                    </div>
+                    <input id="stepsSlider" type="range" min="15" max="80" step="1" value="40">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1">
+<label for="octavesSlider" class="text-gray-300 font-medium">Oitavas de Turbulência</label>
+                        <span id="octavesVal" class="font-mono text-purple-300">7</span>
+                    </div>
+                    <input id="octavesSlider" type="range" min="1" max="11" step="1" value="7">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label for="turbSlider" class="text-gray-300 font-medium">Intensidade do Redemoinho</label>
+                        <span id="turbVal" class="font-mono text-purple-300">0.60</span>
+                    </div>
+                    <input id="turbSlider" type="range" min="0.0" max="1.3" step="0.02" value="0.60">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label for="coneSlider" class="text-gray-300 font-medium">Abertura do Caldeirão (Cone)</label>
+                        <span id="coneVal" class="font-mono text-purple-300">0.40</span>
+                    </div>
+                    <input id="coneSlider" type="range" min="-0.4" max="1.2" step="0.02" value="0.40">
+                </div>
+
+                <div>
+                    <div class="flex justify-between mb-1">
+                        <label for="exposureSlider" class="text-gray-300 font-medium">Divisor de Exposição (×10⁵)</label>
+                        <span id="exposureVal" class="font-mono text-purple-300">15.0</span>
+                    </div>
+                    <input id="exposureSlider" type="range" min="2.0" max="50.0" step="0.5" value="15.0">
+                </div>
+            </div>
+
+            <hr class="border-white/10">
+
+            <!-- Color Presets & Phase Controls -->
+            <div class="space-y-3">
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-300 font-medium">Predefinições de Cores</span>
+                </div>
+                <div class="grid grid-cols-2 gap-1.5">
+                    <button data-preset="5.0,0.0,2.0" class="preset-btn px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-purple-500/40 text-left flex items-center gap-2 transition cursor-pointer">
+                        <span class="w-3 h-3 rounded-full bg-gradient-to-tr from-purple-600 to-amber-400 shrink-0"></span>
+                        <span class="truncate font-medium text-gray-200">Original (5,0,2)</span>
+                    </button>
+                    <button data-preset="0.0,2.2,4.5" class="preset-btn px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left flex items-center gap-2 transition cursor-pointer">
+                        <span class="w-3 h-3 rounded-full bg-gradient-to-tr from-emerald-500 to-lime-300 shrink-0"></span>
+                        <span class="truncate font-medium text-gray-200">Caldeirão Ácido</span>
+                    </button>
+                    <button data-preset="6.0,4.5,2.5" class="preset-btn px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left flex items-center gap-2 transition cursor-pointer">
+                        <span class="w-3 h-3 rounded-full bg-gradient-to-tr from-red-600 to-yellow-400 shrink-0"></span>
+                        <span class="truncate font-medium text-gray-200">Fogo Infernal</span>
+                    </button>
+                    <button data-preset="3.5,2.0,0.2" class="preset-btn px-2.5 py-1.5 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-left flex items-center gap-2 transition cursor-pointer">
+                        <span class="w-3 h-3 rounded-full bg-gradient-to-tr from-blue-600 to-cyan-300 shrink-0"></span>
+                        <span class="truncate font-medium text-gray-200">Gelo Arcano</span>
+                    </button>
+                </div>
+<!-- Fine RGB Phase Sliders -->
+                <div class="pt-1 space-y-2">
+                    <div>
+                        <div class="flex justify-between mb-0.5">
+                            <label for="colRSlider" class="text-gray-400">Fase Vermelha (R)</label>
+                            <span id="colRVal" class="font-mono text-rose-400">5.0</span>
+                        </div>
+                        <input id="colRSlider" type="range" min="0.0" max="6.28" step="0.1" value="5.0">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-0.5">
+                            <label for="colGSlider" class="text-gray-400">Fase Verde (G)</label>
+                            <span id="colGVal" class="font-mono text-emerald-400">0.0</span>
+                        </div>
+                        <input id="colGSlider" type="range" min="0.0" max="6.28" step="0.1" value="0.0">
+                    </div>
+                    <div>
+                        <div class="flex justify-between mb-0.5">
+                            <label for="colBSlider" class="text-gray-400">Fase Azul (B)</label>
+                            <span id="colBVal" class="font-mono text-sky-400">2.0</span>
+                        </div>
+                        <input id="colBSlider" type="range" min="0.0" max="6.28" step="0.1" value="2.0">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Reset Orbit View Button -->
+            <div class="pt-1">
+                <button id="resetCamBtn" class="w-full py-2 rounded-xl bg-white/5 hover:bg-white/10 border border-white/10 text-gray-300 hover:text-white font-medium transition flex items-center justify-center gap-1.5 cursor-pointer">
+                    <svg class="w-3.5 h-3.5 text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 10l4.553-2.276A1 1 0 0121 8.618v6.764a1 1 0 01-1.447.894L15 14M5 18h8a2 2 0 002-2V8a2 2 0 00-2-2H5a2 2 0 00-2 2v8a2 2 0 002 2z"></path>
+                    </svg>
+                    <span>Centralizar Câmera</span>
+                </button>
+            </div>
+        </div>
+    </aside>
+
+    <!-- Modal: Original Code-Golf vs Expanded WebGL2 GLSL -->
+    <div id="codeModal" class="fixed inset-0 z-50 bg-black/80 backdrop-blur-md hidden items-center justify-center p-4">
+        <div class="glass-panel w-full max-w-4xl rounded-2xl overflow-hidden flex flex-col max-h-[90vh] border border-purple-500/30">
+            <!-- Modal Header -->
+            <div class="px-5 py-4 border-b border-white/10 flex items-center justify-between bg-white/[0.02]">
+                <div>
+                    <h3 class="font-bold text-base text-white flex items-center gap-2">
+                        <span class="w-2.5 h-2.5 rounded-full bg-purple-500"></span>
+                        Tradução do Shader "Cauldron"
+                    </h3>
+                    <p class="text-xs text-gray-400 mt-0.5">Comparação entre a sintaxe original compactada (Code-Golf) e o GLSL ES 3.00 completo</p>
+                </div>
+                <button id="closeCodeBtn" class="p-2 rounded-xl bg-white/5 hover:bg-white/10 text-gray-400 hover:text-white transition cursor-pointer">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Modal Body -->
+            <div class="p-5 overflow-y-auto grid grid-cols-1 lg:grid-cols-12 gap-4 text-xs">
+                <!-- Left Column: Original Golfed Shader -->
+<div class="lg:col-span-5 flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold text-purple-300 uppercase tracking-wider text-[11px]">Código Original (Code-Golf)</span>
+                        <span class="text-[11px] font-mono text-gray-400">~215 bytes</span>
+                    </div>
+                    <pre class="code-selectable font-mono text-xs bg-black/60 border border-white/10 rounded-xl p-3.5 text-purple-200 overflow-x-auto leading-relaxed">f z, d
+@(40)
+{
+f3 p = z * nor(2*C.rgb - R.xyy)
+p.zy+=3
+d=2; @(7) d/=.8,
+p +=.6*p.y*cos(p.yzx * d - f3(T,,)*6) / d
+z += d = .02 + abs(len(p.xz) + p.y*.4 -1) / 9
+O += (sin(f4(5,0,2,)-p.y) + 2) / d
+}
+O = tanh(O*O / 15e5)</pre>
+
+                    <div class="bg-purple-950/30 border border-purple-500/20 rounded-xl p-3.5 space-y-2 text-gray-300 leading-relaxed">
+                        <h4 class="font-semibold text-purple-300 text-xs">Como funciona a matemática:</h4>
+                        <ul class="list-disc list-inside space-y-1 text-[11px] text-gray-300">
+                            <li><code class="text-purple-200 font-mono">@(40)</code> executa 40 passos de <em>raymarching</em> volumétrico ao longo do raio.</li>
+                            <li><code class="text-purple-200 font-mono">p.zy += 3</code> desloca a câmera para trás e para cima para enquadrar o caldeirão.</li>
+                            <li><code class="text-purple-200 font-mono">@(7) d/=.8</code> aplica 7 oitavas de distorção harmônica (<code class="font-mono">cos(p.yzx * d)</code>) escalada por <code class="font-mono">p.y</code>.</li>
+                            <li><code class="text-purple-200 font-mono">abs(len(p.xz) + p.y*.4 - 1)</code> define um cone oco translúcido cujas paredes acumulam luz.</li>
+                            <li><code class="text-purple-200 font-mono">tanh(O*O / 15e5)</code> realiza o mapeamento de tom (tone mapping) suave evitando estouro de branco.</li>
+                        </ul>
+                    </div>
+                </div>
+
+                <!-- Right Column: Expanded WebGL 2.0 Shader -->
+                <div class="lg:col-span-7 flex flex-col gap-3">
+                    <div class="flex items-center justify-between">
+                        <span class="font-semibold text-emerald-300 uppercase tracking-wider text-[11px]">WebGL 2.0 (GLSL ES 3.00)</span>
+                        <button id="copyGlslBtn" class="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 border border-emerald-500/30 text-emerald-300 text-[11px] font-medium transition cursor-pointer">
+                            Copiar GLSL
+                        </button>
+                    </div>
+                    <pre id="glslCodeBlock" class="code-selectable font-mono text-[11px] bg-black/60 border border-white/10 rounded-xl p-3.5 text-emerald-200 overflow-x-auto leading-relaxed flex-1">#version 300 es
+precision highp float;
+
+uniform vec2 u_resolution;
+uniform float u_time;
+uniform vec4 u_Color;
+
+void main() {
+    float z = 0.0, d = 0.0;
+    vec4 O = vec4(0.0);
+    
+    // Direção normalizada do raio: nor(2*C.rgb - R.xyy)
+    vec3 rd = normalize(vec3(2.0 * gl_FragCoord.xy - u_resolution.xy, -u_resolution.y));
+
+    for (int i = 0; i < 40; i++) {
+        vec3 p = z * rd;
+        p.zy += 3.0;
+
+        // 7 oitavas de turbulência fluida
+        d = 2.0;
+        for (int j = 0; j < 7; j++) {
+            d /= 0.8;
+            p += 0.6 * p.y * cos(p.yzx * d - vec3(u_time * 6.0, 0.0, 0.0)) / d;
+        }
+
+        // Distância estimada para o cone volumétrico
+        z += d = 0.02 + abs(length(p.xz) + p.y * 0.4 - 1.0) / 9.0;
+
+        // Acumulação cromática baseada na altura p.y
+        O += (sin(vec4(5.0, 0.0, 2.0, 0.0) - p.y) + 2.0) / d;
+    }
+
+    // Tone mapping hiperbólico
+    u_Color = tanh(O * O / 15e5);
+    u_Color.a = 1.0;
+}</pre>
+                </div>
+            </div>
+        </div>
+    </div>
+<script>
+        window.onload = function () {
+            const canvas = document.getElementById('glCanvas');
+            const gl = canvas.getContext('webgl2', { antialias: false, depth: false, stencil: false, powerPreference: 'high-performance' });
+
+            if (!gl) {
+                document.body.innerHTML = 
+                    <div class="flex items-center justify-center h-screen bg-black text-white p-6 text-center">
+                        <div class="max-w-md glass-panel p-6 rounded-2xl border border-red-500/40">
+                            <h2 class="text-lg font-bold text-red-400 mb-2">WebGL 2.0 Não Suportado</h2>
+                            <p class="text-xs text-gray-300">Seu navegador ou dispositivo não suporta WebGL 2.0, que é necessário para executar a função matemática <code class="font-mono text-purple-300">tanh()</code> nativamente no shader.</p>
+                        </div>
+                    </div>;
+                return;
+            }
+
+            // Vertex Shader (Full-screen triangle strip quad)
+            const vsSource = `#version 300 es
+                in vec2 a_position;
+                void main() {
+                    gl_Position = vec4(a_position, 0.0, 1.0);
+                }
+            `;
+
+            // Fragment Shader (Exact translation of Cauldron + interactive uniforms)
+            const fsSource = `#version 300 es
+                precision highp float;
+
+                out vec4 fragColor;
+
+                uniform vec2 u_resolution;
+                uniform float u_time;
+                uniform int u_steps;
+                uniform int u_octaves;
+                uniform float u_turb;
+                uniform float u_cone;
+                uniform float u_exposure;
+                uniform vec3 u_colPhase;
+                uniform vec2 u_rot;
+
+                mat2 rot2D(float a) {
+                    float s = sin(a), c = cos(a);
+                    return mat2(c, -s, s, c);
+                }
+
+                void main() {
+                    float z = 0.0;
+                    float d = 0.0;
+                    vec4 O = vec4(0.0);
+
+                    // nor(2*C.rgb - R.xyy)
+                    vec3 rd = normalize(vec3(2.0 * gl_FragCoord.xy - u_resolution.xy, -u_resolution.y));
+
+                    // Rotação opcional suave da câmera via mouse/toque
+                    rd.yz *= rot2D(u_rot.y);
+                    rd.xz *= rot2D(u_rot.x);
+
+                    // @(40) loop externo de raymarching
+                    for (int i = 0; i < 80; i++) {
+                        if (i >= u_steps) break;
+
+                        vec3 p = z * rd;
+                        p.zy += 3.0;
+
+                        // d=2; @(7) d/=.8, p += .6*p.y*cos(p.yzx * d - f3(T,,)*6) / d
+                        d = 2.0;
+                        for (int j = 0; j < 12; j++) {
+                            if (j >= u_octaves) break;
+                            d /= 0.8;
+                            p += u_turb * p.y * cos(p.yzx * d - vec3(u_time * 6.0, 0.0, 0.0)) / d;
+                        }
+
+                        // z += d = .02 + abs(len(p.xz) + p.y*.4 -1) / 9
+                        d = 0.02 + abs(length(p.xz) + p.y * u_cone - 1.0) / 9.0;
+                        z += d;
+
+                        // O += (sin(f4(5,0,2,)-p.y) + 2) / d
+                        O += (sin(vec4(u_colPhase, 0.0) - p.y) + 2.0) / d;
+                    }
+
+                    // O = tanh(O*O / 15e5)
+                    fragColor = tanh((O * O) / (u_exposure * 1e5));
+                    fragColor.a = 1.0;
+                }
+            `;
+
+            function compileShader(type, source) {
+                const shader = gl.createShader(type);
+                gl.shaderSource(shader, source);
+                gl.compileShader(shader);
+                if (!gl.getShaderParameter(shader, gl.COMPILE_STATUS)) {
+                    console.error('Erro ao compilar shader:', gl.getShaderInfoLog(shader));
+                    gl.deleteShader(shader);
+                    return null;
+                }
+                return shader;
+            }
+const vertexShader = compileShader(gl.VERTEX_SHADER, vsSource);
+            const fragmentShader = compileShader(gl.FRAGMENT_SHADER, fsSource);
+
+            const program = gl.createProgram();
+            gl.attachShader(program, vertexShader);
+            gl.attachShader(program, fragmentShader);
+            gl.linkProgram(program);
+
+            if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+                console.error('Erro ao linkar programa WebGL:', gl.getProgramInfoLog(program));
+                return;
+            }
+
+            gl.useProgram(program);
+
+            // Quad Buffer Setup
+            const positionBuffer = gl.createBuffer();
+            gl.bindBuffer(gl.ARRAY_BUFFER, positionBuffer);
+            const positions = new Float32Array([
+                -1.0, -1.0,
+                 1.0, -1.0,
+                -1.0,  1.0,
+                -1.0,  1.0,
+                 1.0, -1.0,
+                 1.0,  1.0,
+            ]);
+            gl.bufferData(gl.ARRAY_BUFFER, positions, gl.STATIC_DRAW);
+
+            const posLoc = gl.getAttribLocation(program, 'a_position');
+            gl.enableVertexAttribArray(posLoc);
+            gl.vertexAttribPointer(posLoc, 2, gl.FLOAT, false, 0, 0);
+
+            // Uniform Locations
+            const uniforms = {
+                resolution: gl.getUniformLocation(program, 'u_resolution'),
+                time: gl.getUniformLocation(program, 'u_time'),
+                steps: gl.getUniformLocation(program, 'u_steps'),
+                octaves: gl.getUniformLocation(program, 'u_octaves'),
+                turb: gl.getUniformLocation(program, 'u_turb'),
+                cone: gl.getUniformLocation(program, 'u_cone'),
+                exposure: gl.getUniformLocation(program, 'u_exposure'),
+                colPhase: gl.getUniformLocation(program, 'u_colPhase'),
+                rot: gl.getUniformLocation(program, 'u_rot')
+            };
+
+            // Application State (Default values match original Cauldron code-golf)
+            const defaults = {
+                scale: 0.75,
+                speed: 1.0,
+                steps: 40,
+                octaves: 7,
+                turb: 0.60,
+                cone: 0.40,
+                exposure: 15.0,
+                colR: 5.0,
+                colG: 0.0,
+                colB: 2.0,
+                rotX: 0.0,
+                rotY: 0.0
+            };
+
+            const state = { ...defaults, paused: false };
+
+            // Sizing & Resolution Management
+            const resDisplay = document.getElementById('resDisplay');
+            function resizeCanvas() {
+                const dpr = Math.min(window.devicePixelRatio || 1, 2);
+                const width = Math.floor(window.innerWidth * dpr * state.scale);
+                const height = Math.floor(window.innerHeight * dpr * state.scale);
+
+                if (canvas.width !== width || canvas.height !== height) {
+                    canvas.width = width;
+                    canvas.height = height;
+                    gl.viewport(0, 0, width, height);
+                    resDisplay.textContent = `${width}×${height}`;
+                }
+            }
+            window.addEventListener('resize', resizeCanvas);
+            resizeCanvas();
+
+            // Interactive Camera Orbit (Mouse & Touch)
+            let isDragging = false;
+            let lastX = 0, lastY = 0;
+            let targetRotX = 0, targetRotY = 0;
+
+            canvas.addEventListener('pointerdown', (e) => {
+                isDragging = true;
+                lastX = e.clientX;
+                lastY = e.clientY;
+                canvas.setPointerCapture(e.pointerId);
+            });
+
+            canvas.addEventListener('pointermove', (e) => {
+                if (!isDragging) return;
+                const dx = e.clientX - lastX;
+                const dy = e.clientY - lastY;
+                lastX = e.clientX;
+                lastY = e.clientY;
+targetRotX = Math.max(-1.2, Math.min(1.2, targetRotX + dx * 0.004));
+                targetRotY = Math.max(-0.8, Math.min(0.8, targetRotY + dy * 0.004));
+            });
+
+            canvas.addEventListener('pointerup', (e) => {
+                isDragging = false;
+                canvas.releasePointerCapture(e.pointerId);
+            });
+
+            canvas.addEventListener('dblclick', () => {
+                targetRotX = 0;
+                targetRotY = 0;
+            });
+
+            // UI Elements Binding
+            const speedSlider = document.getElementById('speedSlider');
+            const stepsSlider = document.getElementById('stepsSlider');
+            const octavesSlider = document.getElementById('octavesSlider');
+            const turbSlider = document.getElementById('turbSlider');
+            const coneSlider = document.getElementById('coneSlider');
+            const exposureSlider = document.getElementById('exposureSlider');
+            const colRSlider = document.getElementById('colRSlider');
+            const colGSlider = document.getElementById('colGSlider');
+            const colBSlider = document.getElementById('colBSlider');
+
+            const speedVal = document.getElementById('speedVal');
+            const stepsVal = document.getElementById('stepsVal');
+            const octavesVal = document.getElementById('octavesVal');
+            const turbVal = document.getElementById('turbVal');
+            const coneVal = document.getElementById('coneVal');
+            const exposureVal = document.getElementById('exposureVal');
+            const colRVal = document.getElementById('colRVal');
+            const colGVal = document.getElementById('colGVal');
+            const colBVal = document.getElementById('colBVal');
+
+            function updateUIFromState() {
+                speedSlider.value = state.speed;
+                speedVal.textContent = `${state.speed.toFixed(2)}x`;
+
+                stepsSlider.value = state.steps;
+                stepsVal.textContent = state.steps;
+
+                octavesSlider.value = state.octaves;
+                octavesVal.textContent = state.octaves;
+
+                turbSlider.value = state.turb;
+                turbVal.textContent = state.turb.toFixed(2);
+
+                coneSlider.value = state.cone;
+                coneVal.textContent = state.cone.toFixed(2);
+
+                exposureSlider.value = state.exposure;
+                exposureVal.textContent = state.exposure.toFixed(1);
+
+                colRSlider.value = state.colR;
+                colRVal.textContent = state.colR.toFixed(1);
+
+                colGSlider.value = state.colG;
+                colGVal.textContent = state.colG.toFixed(1);
+
+                colBSlider.value = state.colB;
+                colBVal.textContent = state.colB.toFixed(1);
+
+                document.getElementById('scaleLabel').textContent = `${state.scale}x`;
+                document.querySelectorAll('.scale-btn').forEach(btn => {
+                    const s = parseFloat(btn.getAttribute('data-scale'));
+                    if (Math.abs(s - state.scale) < 0.01) {
+                        btn.className = 'scale-btn py-1.5 rounded-lg font-mono text-xs transition bg-purple-600 text-white shadow cursor-pointer';
+                    } else {
+                        btn.className = 'scale-btn py-1.5 rounded-lg font-mono text-xs transition text-gray-400 hover:text-white cursor-pointer';
+                    }
+                });
+            }
+
+            speedSlider.addEventListener('input', (e) => {
+                state.speed = parseFloat(e.target.value);
+                speedVal.textContent = `${state.speed.toFixed(2)}x`;
+            });
+            stepsSlider.addEventListener('input', (e) => {
+                state.steps = parseInt(e.target.value, 10);
+stepsVal.textContent = state.steps;
+            });
+            octavesSlider.addEventListener('input', (e) => {
+                state.octaves = parseInt(e.target.value, 10);
+                octavesVal.textContent = state.octaves;
+            });
+            turbSlider.addEventListener('input', (e) => {
+                state.turb = parseFloat(e.target.value);
+                turbVal.textContent = state.turb.toFixed(2);
+            });
+            coneSlider.addEventListener('input', (e) => {
+                state.cone = parseFloat(e.target.value);
+                coneVal.textContent = state.cone.toFixed(2);
+            });
+            exposureSlider.addEventListener('input', (e) => {
+                state.exposure = parseFloat(e.target.value);
+                exposureVal.textContent = state.exposure.toFixed(1);
+            });
+            colRSlider.addEventListener('input', (e) => {
+                state.colR = parseFloat(e.target.value);
+                colRVal.textContent = state.colR.toFixed(1);
+            });
+            colGSlider.addEventListener('input', (e) => {
+                state.colG = parseFloat(e.target.value);
+                colGVal.textContent = state.colG.toFixed(1);
+            });
+            colBSlider.addEventListener('input', (e) => {
+                state.colB = parseFloat(e.target.value);
+                colBVal.textContent = state.colB.toFixed(1);
+            });
+
+            // Resolution Scale Buttons
+            document.querySelectorAll('.scale-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    state.scale = parseFloat(btn.getAttribute('data-scale'));
+                    updateUIFromState();
+                    resizeCanvas();
+                });
+            });
+
+            // Color Presets
+            document.querySelectorAll('.preset-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    const [r, g, b] = btn.getAttribute('data-preset').split(',').map(Number);
+                    state.colR = r;
+                    state.colG = g;
+                    state.colB = b;
+                    updateUIFromState();
+
+                    document.querySelectorAll('.preset-btn').forEach(bEl => {
+                        bEl.classList.remove('border-purple-500/40');
+                        bEl.classList.add('border-white/10');
+                    });
+                    btn.classList.remove('border-white/10');
+                    btn.classList.add('border-purple-500/40');
+                });
+            });
+
+            // Play / Pause Button
+            const playPauseBtn = document.getElementById('playPauseBtn');
+            const playPauseIcon = document.getElementById('playPauseIcon');
+            const playPauseText = document.getElementById('playPauseText');
+            const statusPing = document.getElementById('statusPing');
+            const statusDot = document.getElementById('statusDot');
+
+            playPauseBtn.addEventListener('click', () => {
+                state.paused = !state.paused;
+                if (state.paused) {
+                    playPauseIcon.textContent = '▶';
+                    playPauseText.textContent = 'Continuar';
+                    statusPing.classList.add('hidden');
+                    statusDot.classList.replace('bg-purple-500', 'bg-amber-500');
+                } else {
+                    playPauseIcon.textContent = '⏸';
+                    playPauseText.textContent = 'Pausar';
+                    statusPing.classList.remove('hidden');
+                    statusDot.classList.replace('bg-amber-500', 'bg-purple-500');
+                }
+            });
+
+            // Reset All Defaults
+            document.getElementById('resetBtn').addEventListener('click', () => {
+                const wasPaused = state.paused;
+                Object.assign(state, defaults);
+                state.paused = wasPaused;
+                targetRotX = 0;
+                targetRotY = 0;
+                updateUIFromState();
+                resizeCanvas();
+            });
+// Reset Camera Orbit
+            document.getElementById('resetCamBtn').addEventListener('click', () => {
+                targetRotX = 0;
+                targetRotY = 0;
+            });
+
+            // Collapsible Control Panel
+            const controlPanel = document.getElementById('controlPanel');
+            const togglePanelBtn = document.getElementById('togglePanelBtn');
+            const togglePanelText = document.getElementById('togglePanelText');
+            let panelVisible = true;
+
+            togglePanelBtn.addEventListener('click', () => {
+                panelVisible = !panelVisible;
+                if (panelVisible) {
+                    controlPanel.classList.remove('opacity-0', 'scale-95', 'pointer-events-none');
+                    togglePanelText.textContent = 'Ocultar Painel';
+                } else {
+                    controlPanel.classList.add('opacity-0', 'scale-95', 'pointer-events-none');
+                    togglePanelText.textContent = 'Mostrar Painel';
+                }
+            });
+
+            // Modal Code Viewer
+            const codeModal = document.getElementById('codeModal');
+            document.getElementById('openCodeBtn').addEventListener('click', () => {
+                codeModal.classList.remove('hidden');
+                codeModal.classList.add('flex');
+            });
+            document.getElementById('closeCodeBtn').addEventListener('click', () => {
+                codeModal.classList.add('hidden');
+                codeModal.classList.remove('flex');
+            });
+            codeModal.addEventListener('click', (e) => {
+                if (e.target === codeModal) {
+                    codeModal.classList.add('hidden');
+                    codeModal.classList.remove('flex');
+                }
+            });
+
+            // Copy GLSL Code Button
+            const copyGlslBtn = document.getElementById('copyGlslBtn');
+            copyGlslBtn.addEventListener('click', () => {
+                const codeText = document.getElementById('glslCodeBlock').innerText;
+                const tempArea = document.createElement('textarea');
+                tempArea.value = codeText;
+                document.body.appendChild(tempArea);
+                tempArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempArea);
+
+                const originalText = copyGlslBtn.textContent;
+                copyGlslBtn.textContent = 'Copiado!';
+                setTimeout(() => {
+                    copyGlslBtn.textContent = originalText;
+                }, 1800);
+            });
+
+            // Animation & FPS Loop
+            let accumulatedTime = 0;
+            let lastFrameTime = performance.now();
+            let fpsFrames = 0;
+            let fpsLastCheck = performance.now();
+            const fpsCounter = document.getElementById('fpsCounter');
+
+            function render(now) {
+                const dt = (now - lastFrameTime) * 0.001;
+                lastFrameTime = now;
+
+                if (!state.paused) {
+                    accumulatedTime += dt * state.speed;
+                }
+
+                // Smooth camera damping
+                state.rotX += (targetRotX - state.rotX) * 0.1;
+                state.rotY += (targetRotY - state.rotY) * 0.1;
+
+                // FPS Counter Update
+                fpsFrames++;
+                if (now - fpsLastCheck >= 500) {
+                    const currentFps = Math.round((fpsFrames * 1000) / (now - fpsLastCheck));
+                    fpsCounter.textContent = currentFps;
+                    fpsFrames = 0;
+                    fpsLastCheck = now;
+                }
+
+                // Pass Uniforms to Shader
+                gl.uniform2f(uniforms.resolution, canvas.width, canvas.height);
+                gl.uniform1f(uniforms.time, accumulatedTime);
+gl.uniform1i(uniforms.steps, state.steps);
+                gl.uniform1i(uniforms.octaves, state.octaves);
+                gl.uniform1f(uniforms.turb, state.turb);
+                gl.uniform1f(uniforms.cone, state.cone);
+                gl.uniform1f(uniforms.exposure, state.exposure);
+                gl.uniform3f(uniforms.colPhase, state.colR, state.colG, state.colB);
+                gl.uniform2f(uniforms.rot, state.rotX, state.rotY);
+
+                gl.drawArrays(gl.TRIANGLES, 0, 6);
+
+                requestAnimationFrame(render);
+            }
+
+            updateUIFromState();
+            requestAnimationFrame(render);
+        };
+    </script>
+</body>
+</html>
