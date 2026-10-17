@@ -43,6 +43,8 @@ O = tanh(O*O / 15e5)
 
 // ── WebGL renderer ───────────────────────────────────────────────
 const canvas = document.getElementById('sh');
+canvas.width = window.innerWidth;
+canvas.height = window.innerHeight;
 const gl = canvas.getContext('webgl');
 if (!gl) { alert('WebGL not supported'); }
 
@@ -94,7 +96,16 @@ void main() {
 `;
 
 const program = gl.createProgram();
-gl.compileProgram(program);
+gl.compileShader(gl.VERTEX_SHADER);
+gl.attachShader(program, gl.VERTEX_SHADER);
+gl.attachShader(program, gl.FRAGMENT_SHADER);
+gl.linkProgram(program);
+
+if (!gl.getProgramParameter(program, gl.LINK_STATUS)) {
+  console.error('Link error:', gl.getProgramInfoLog(program));
+}
+
+gl.useProgram(program);
 
 const vao = gl.createVertexArray();
 gl.bindVertexArray(vao);
@@ -113,8 +124,7 @@ const uTime = gl.getUniformLocation(program, 'u_time');
 let t = 0;
 function render() {
   t += 0.016;
-  gl.useProgram(program);
-  gl.uniform2f(uRes, canvas.width / 2 / 300, canvas.height / 2 / 300);
+  gl.uniform2f(uRes, canvas.width / 300, canvas.height / 300);
   gl.uniform1f(uTime, t);
   gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
   requestAnimationFrame(render);
