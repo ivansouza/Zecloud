@@ -429,13 +429,13 @@ void main() {
             const gl = canvas.getContext('webgl2', { antialias: false, depth: false, stencil: false, powerPreference: 'high-performance' });
 
             if (!gl) {
-                document.body.innerHTML = 
-                    <div class="flex items-center justify-center h-screen bg-black text-white p-6 text-center">
+                document.body.innerHTML =
+                    `<div class="flex items-center justify-center h-screen bg-black text-white p-6 text-center">
                         <div class="max-w-md glass-panel p-6 rounded-2xl border border-red-500/40">
                             <h2 class="text-lg font-bold text-red-400 mb-2">WebGL 2.0 Não Suportado</h2>
                             <p class="text-xs text-gray-300">Seu navegador ou dispositivo não suporta WebGL 2.0, que é necessário para executar a função matemática <code class="font-mono text-purple-300">tanh()</code> nativamente no shader.</p>
                         </div>
-                    </div>;
+                    </div>`;
                 return;
             }
 
