@@ -3,20 +3,135 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
-<title>Brasília · Esplanada dos Ministérios</title>
+<title>Esplanada · Brasília</title>
 <style>
-  html, body { margin: 0; padding: 0; height: 100%; background: #000; overflow: hidden; }
-  #stage { position: fixed; inset: 0; }
-  #stage canvas { display: block; width: 100%; height: 100%; }
-  #veil {
-    position: fixed; inset: 0; background: #000; pointer-events: none;
-    transition: opacity 1.4s ease 0.2s; opacity: 1; z-index: 10;
-  }
-  #veil.gone { opacity: 0; }
+*{box-sizing:border-box}
+html,body{width:100%;height:100%;margin:0;overflow:hidden;background:#0a0d12;color:#fff;font-family:Arial,Helvetica,sans-serif}
+body{--gold:#e8d5ae}
+#stage{position:fixed;inset:0;z-index:0}
+#stage canvas{display:block;width:100%;height:100%;touch-action:none;cursor:grab}
+#stage canvas:active{cursor:grabbing}
+button,select,input{font:inherit}
+button,select{color:inherit;border:1px solid #ffffff32;background:#17202857;backdrop-filter:blur(14px);border-radius:7px;height:36px;cursor:pointer}
+button{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 12px}
+button:hover,select:hover{background:#ffffff26}
+button:focus-visible,select:focus-visible,input:focus-visible{outline:2px solid var(--gold);outline-offset:4px}
+button svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+select{padding:0 10px;font-size:11px;color-scheme:dark}
+#letterbox{position:fixed;inset:0;pointer-events:none;border-top:4.2vh solid #05070a;border-bottom:4.2vh solid #05070a;z-index:3}
+#vignette{position:fixed;inset:0;pointer-events:none;background:radial-gradient(ellipse at 50% 45%,transparent 52%,#0710185c 100%);z-index:2}
+.ui{transition:opacity .6s ease;z-index:5;position:fixed}
+.hidden-ui .ui{opacity:0;pointer-events:none}
+#masthead{left:4.2vw;top:calc(4.2vh + 29px);text-shadow:0 2px 15px #0009;pointer-events:none}
+.eyebrow{font-size:9px;letter-spacing:4px;color:#f0e4d2a9;margin:0 0 12px}
+h1{font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:clamp(30px,4.2vw,58px);letter-spacing:1px;margin:0;line-height:1.1}
+.subtitle{font-family:Georgia,'Times New Roman',serif;font-style:italic;font-size:14px;letter-spacing:.3px;color:#f5e9d2c4;margin:10px 0 0}
+.top-actions{right:4.2vw;top:calc(4.2vh + 29px);display:flex;gap:8px}
+.icon-btn{width:36px;padding:0}
+.off{display:none!important}
+#controls{bottom:calc(4.2vh + 20px);left:4.2vw;right:4.2vw;display:grid;grid-template-columns:1fr auto;gap:16px;align-items:end}
+#chapter-line{display:flex;align-items:center;gap:10px;margin-bottom:12px;font-size:10px;letter-spacing:1.6px;text-shadow:0 2px 8px #000}
+.chapter-number{font-size:9px;color:var(--gold);border:1px solid #e8d5ae70;border-radius:50%;width:23px;height:23px;display:inline-flex;align-items:center;justify-content:center}
+#timeline{display:flex;align-items:center;gap:12px;max-width:560px}
+#seek{accent-color:#e8d5ae;min-width:70px;flex:1;height:16px;cursor:pointer}
+#time{font-size:10px;font-variant-numeric:tabular-nums;letter-spacing:.7px;color:#ffffffbc;white-space:nowrap}
+#actions{display:flex;align-items:center;gap:8px}
+#play{font-size:11px;min-width:112px}
+.help{position:fixed;bottom:calc(4.2vh + 1px);right:4.2vw;font-size:9px;letter-spacing:.7px;color:#ffffff58;z-index:5;pointer-events:none}
+#loading{position:fixed;inset:0;display:flex;align-items:center;justify-content:center;flex-direction:column;background:#0b0f15;z-index:10;transition:opacity .9s}
+.loading-title{font-family:Georgia,serif;font-size:31px;letter-spacing:2px}
+.loading-caption{font-size:10px;text-transform:uppercase;letter-spacing:3px;margin-top:18px;color:#e5d5ba9e}
+.loading-bar{width:190px;height:1px;background:#ffffff25;margin-top:28px;overflow:hidden}
+.loading-bar i{display:block;height:1px;background:#e5d5ba;width:0;animation:loadbar 7s cubic-bezier(.2,.6,.3,1) forwards}
+@keyframes loadbar{0%{width:4%}35%{width:42%}70%{width:74%}100%{width:92%}}
+#error{max-width:430px;text-align:center;line-height:1.6;padding:25px;font-size:14px}
+#about{position:fixed;z-index:7;right:4.2vw;top:calc(4.2vh + 78px);width:min(360px,90vw);padding:25px;background:#111c25ee;backdrop-filter:blur(20px);border:1px solid #ffffff26;border-radius:10px;font-size:12px;line-height:1.8;color:#ece7de}
+#about h2{font:24px Georgia,serif;margin:0 0 15px}
+#about p{margin:10px 0}
+#about .keys{font-size:11px;color:#d9d2c1}
+#about-close{float:right}
+#toast{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);padding:12px 20px;border-radius:8px;background:#14212bcb;z-index:8;font-size:12px;opacity:0;transition:opacity .3s;pointer-events:none}
+.hidden-ui .help{opacity:0}
+#show-ui{position:fixed;right:15px;bottom:14px;z-index:6;opacity:0;pointer-events:none;background:#17202850}
+.hidden-ui #show-ui{opacity:.55;pointer-events:auto}
+@media(max-width:650px){
+  #masthead{top:calc(4.2vh + 18px);max-width:calc(100vw - 120px)}
+  .eyebrow{font-size:7px;letter-spacing:2px;margin-bottom:7px}
+  h1{font-size:26px}
+  .subtitle{font-size:11px;max-width:210px}
+  .top-actions{top:calc(4.2vh + 18px);gap:5px}
+  #controls{grid-template-columns:1fr;gap:10px;bottom:calc(4.2vh + 16px)}
+  #timeline{max-width:none}
+  #actions{display:grid;grid-template-columns:1.4fr 36px 1fr 1fr;gap:7px}
+  #play{grid-column:1;min-width:0}
+  #sound{position:absolute;right:44px;bottom:92px}
+  #fullscreen{position:absolute;right:0;bottom:92px}
+  #quality,#speed{width:100%;max-width:none;padding:0 6px;font-size:10px}
+  .help{display:none}
+  #chapter-line{margin-bottom:5px;font-size:9px;max-width:calc(100% - 90px)}
+  #about{top:calc(4.2vh + 66px);right:3vw;width:94vw}
+}
+@media(prefers-reduced-motion:reduce){.ui,#loading{transition:none}}
 </style>
 </head>
 <body>
-<div id="veil"></div>
+
+<div id="letterbox"></div>
+<div id="vignette"></div>
+
+<header id="masthead" class="ui">
+  <p class="eyebrow">UM VOO SOBRE O PLANO PILOTO</p>
+  <h1>Esplanada</h1>
+  <p class="subtitle">Brasília, ao nascer do sol.</p>
+</header>
+
+<div class="top-actions ui">
+  <button id="info" class="icon-btn" aria-label="Sobre este voo" title="Sobre este voo"><svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><path d="M12 11v6m0-10v.5"/></svg></button>
+  <button id="hide" class="icon-btn" aria-label="Ocultar interface" title="Ocultar interface (H)"><svg viewBox="0 0 24 24"><path d="M3 9V4h5m8 0h5v5M3 15v5h5m8 0h5v-5"/></svg></button>
+</div>
+
+<div id="controls" class="ui">
+  <div>
+    <div id="chapter-line"><span class="chapter-number" id="chapter-number">01</span><span id="chapter">APROXIMAÇÃO</span></div>
+    <div id="timeline">
+      <input id="seek" type="range" min="0" max="66" step="0.05" value="0" aria-label="Posição do voo">
+      <span id="time">0:00 / 1:06</span>
+    </div>
+  </div>
+  <div id="actions">
+    <button id="play" title="Pausar ou continuar (Espaço)"><svg id="pause-icon" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14"/></svg><span id="play-label">Pausar</span></button>
+    <button id="restart" class="icon-btn" title="Reiniciar voo (R)" aria-label="Reiniciar voo"><svg viewBox="0 0 24 24"><path d="M4 9a8 8 0 1 1 1 9M4 4v5h5"/></svg></button>
+    <select id="speed" aria-label="Velocidade do voo" title="Velocidade do voo">
+      <option value="0.5">0.5×</option><option value="1" selected>1×</option><option value="1.5">1.5×</option><option value="2">2×</option>
+    </select>
+    <select id="quality" aria-label="Qualidade de renderização" title="Qualidade">
+      <option value="auto" selected>Auto</option><option value="high">Cinema</option><option value="medium">Equilibrado</option><option value="low">Rápido</option>
+    </select>
+    <button id="sound" class="icon-btn" title="Vento ambiente (M)" aria-label="Ativar vento ambiente" aria-pressed="false"><svg viewBox="0 0 24 24"><path d="M11 4 6 8H3v8h3l5 4ZM16 9l5 6m0-6-5 6"/></svg></button>
+    <button id="fullscreen" class="icon-btn" title="Tela cheia (F)" aria-label="Tela cheia"><svg viewBox="0 0 24 24"><path d="M3 9V3h6m6 0h6v6M3 15v6h6m6 0h6v-6"/></svg></button>
+  </div>
+</div>
+
+<div class="help ui">ESPAÇO pausar · ARRASTE para olhar · H ocultar</div>
+<button id="show-ui" class="icon-btn" aria-label="Mostrar interface" title="Mostrar interface (H)"><svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h16"/></svg></button>
+
+<aside id="about" class="off">
+  <button id="about-close" class="icon-btn" aria-label="Fechar informações">×</button>
+  <h2>Uma cidade feita de código.</h2>
+  <p>Noventa segundos de voo sobre a Esplanada dos Ministérios ao nascer do sol: a Catedral, os ministérios, o Congresso e a Torre de TV.</p>
+  <p>Todo o cenário — concreto, vidro, mármore, cerrado, céu e vitral — é gerado matematicamente no navegador. Nenhuma fotografia, modelo 3D ou textura externa é usada.</p>
+  <p>É uma reconstrução artística inspirada em Brasília, não um levantamento topográfico.</p>
+  <p class="keys">ESPAÇO · pausar &nbsp; R · reiniciar &nbsp; F · tela cheia<br>H · ocultar &nbsp; M · vento ambiente<br>← / → · avançar no voo &nbsp; ARRASTE · olhar em volta</p>
+</aside>
+
+<div id="loading">
+  <div class="loading-title">Esplanada</div>
+  <div class="loading-caption" id="loading-caption">Construindo Brasília</div>
+  <div class="loading-bar"><i id="load-progress"></i></div>
+</div>
+<div id="toast" role="status"></div>
+<noscript><div id="error">Ative o JavaScript para sobrevoar a Esplanada.</div></noscript>
+
 <script type="module">
 /**
  * @license
@@ -53065,7 +53180,7 @@ export { ACESFilmicToneMapping, AddEquation, AddOperation, AdditiveAnimationBlen
 
 
 /* ===================== generated scenery begins ===================== */
-{
+window.__startApp = function () {
 
 /* =========================================================================
    Brasília — Esplanada dos Ministérios · procedural drone film
@@ -54515,6 +54630,10 @@ function updateCamera(t) {
   camera.up.copy(worldUp);
   camera.lookAt(camLook);
 
+  // free-look offset from dragging
+  if (look.x !== 0) camera.rotateY(look.x);
+  if (look.y !== 0) camera.rotateX(look.y);
+
   // bank into the turns
   hermite(KEYS, Math.max(0, t - 0.6), 'l', prevLook);
   const dYaw = Math.atan2(camLook.z - camera.position.z, camLook.x - camera.position.x)
@@ -54523,7 +54642,10 @@ function updateCamera(t) {
   const roll = clamp(-wrapped * 2.4, -0.18, 0.18) + Math.sin(t * 0.31) * 0.006;
   camera.rotateZ(roll);
 
-  const fov = sampleScalar(KEYS, t, 'fov');
+  let fov = sampleScalar(KEYS, t, 'fov');
+  // portrait screens: widen vertically so the framing is not a narrow slice
+  const aspect = camera.aspect || 1.777;
+  if (aspect < 1.5) fov += clamp((1.5 - aspect) * 14, 0, 16);
   camera.fov = fov;
   camera.updateProjectionMatrix();
 }
@@ -54560,12 +54682,22 @@ function updateSunShadow() {
 function updateAt(t, dt) {
   clock.time = t;
   skyUniforms.uTime.value = t;
-  skyMesh.position.copy(camera.position);
+
+  // drag-look spring: ease toward the target, decay it back to centre when released
+  if (!dragging) {
+    const decay = Math.exp(-dt * 0.55);
+    lookTarget.x *= decay; lookTarget.y *= decay;
+  }
+  const ease = dt > 0 ? 1 - Math.exp(-dt * 7) : 1;
+  look.x += (lookTarget.x - look.x) * ease;
+  look.y += (lookTarget.y - look.y) * ease;
+
   updateCamera(t);
+  skyMesh.position.copy(camera.position);
   updateSunShadow();
   updateTraffic(dt);
 
-  const fadeIn = smoothstep(0, 2.2, t);
+  const fadeIn = smoothstep(0, 1.2, t);
   const fadeOut = 1.0 - smoothstep(DURATION - 0.4, DURATION + HOLD, t);
   finalMat.uniforms.uFade.value = Math.min(fadeIn, fadeOut);
   finalMat.uniforms.uTime.value = t;
@@ -54604,50 +54736,132 @@ function renderFrame() {
   runPass(finalMat, null);
 }
 
-/* ------------------------------------------------------------------ loop --- */
-let last = performance.now();
-let fTime = 0;
-let frameMs = 16;
-window.__pause = false;
+/* ------------------------------------------------------------- playback --- */
+const CHAPTERS = [[0, 'APROXIMAÇÃO'], [12, 'CATEDRAL'], [33, 'ESPLANADA'], [52, 'CONGRESSO']];
+const LOOP_END = DURATION + HOLD;
 
+let flight = 0;
+let playing = true;
+let speed = 1;
+let quality = 'auto';
+let last = performance.now();
+let frameMs = 16;
+let dprScale = 1;
+let loaderHidden = false;
+
+/* free look */
+const look = { x: 0, y: 0 };
+const lookTarget = { x: 0, y: 0 };
+let dragging = false, dragId = null, lastPX = 0, lastPY = 0;
+
+const view = renderer.domElement;
+view.style.touchAction = 'none';
+view.addEventListener('pointerdown', (e) => {
+  dragging = true; dragId = e.pointerId;
+  lastPX = e.clientX; lastPY = e.clientY;
+  try { view.setPointerCapture(e.pointerId); } catch (_) {}
+});
+view.addEventListener('pointermove', (e) => {
+  if (!dragging || e.pointerId !== dragId) return;
+  const dx = e.clientX - lastPX, dy = e.clientY - lastPY;
+  lastPX = e.clientX; lastPY = e.clientY;
+  lookTarget.x = clamp(lookTarget.x + dx * 0.0024, -0.55, 0.55);
+  lookTarget.y = clamp(lookTarget.y + dy * 0.0020, -0.38, 0.38);
+});
+const endDrag = (e) => { if (e.pointerId === dragId) { dragging = false; dragId = null; } };
+view.addEventListener('pointerup', endDrag);
+view.addEventListener('pointercancel', endDrag);
+view.addEventListener('pointerleave', endDrag);
+
+/* quality */
+function setShadowSize(n) {
+  if (sun.shadow.mapSize.x === n) return;
+  sun.shadow.mapSize.set(n, n);
+  if (sun.shadow.map) { sun.shadow.map.dispose(); sun.shadow.map = null; }
+  if (scene.environment) scene.environment.needsUpdate = false;
+}
+function applyPixelRatio() {
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 1.7) * dprScale);
+  resize();
+}
+function setQuality(q) {
+  quality = q;
+  if (q === 'high') { dprScale = 1; setShadowSize(4096); }
+  else if (q === 'medium') { dprScale = 0.85; setShadowSize(2048); }
+  else if (q === 'low') { dprScale = 0.62; setShadowSize(1024); }
+  else { dprScale = 1; setShadowSize(LOW_POWER ? 2048 : 3072); }
+  applyPixelRatio();
+}
+
+/* ------------------------------------------------------------- main loop --- */
 function tick(now) {
-  const dt = Math.min((now - last) / 1000, 0.1);
+  const dt = clamp((now - last) / 1000, 0, 0.1);
   last = now;
-  if (!window.__pause) {
-    fTime += dt;
-    const total = DURATION + HOLD + 1.2;
-    if (fTime > total) fTime = 0;
+  if (!document.hidden) {
+    frameMs = frameMs * 0.94 + dt * 1000 * 0.06;
+    if (playing) {
+      flight += dt * speed;
+      if (flight >= LOOP_END + 1.4) flight = 0;
+    }
+    updateAt(Math.min(flight, LOOP_END), dt);
+    renderFrame();
+    clock.frame++;
+
+    if (quality === 'auto' && clock.frame % 150 === 0 && frameMs > 34 && dprScale > 0.66) {
+      dprScale = Math.max(0.64, dprScale * 0.85);
+      applyPixelRatio();
+    }
+    if (!loaderHidden && window.__ready) hideLoader();
   }
-  const t = Math.min(fTime, DURATION + HOLD);
-  updateAt(t, dt);
-  renderFrame();
-  clock.frame++;
   requestAnimationFrame(tick);
 }
 
-/* ------------------------------------------------------------- resizing --- */
+function hideLoader() {
+  loaderHidden = true;
+  const el = document.getElementById('loading');
+  if (el) { el.style.opacity = '0'; setTimeout(() => el.remove(), 950); }
+}
+
+/* ---------------------------------------------------------------- resizing --- */
 function resize() {
   W = window.innerWidth; H = window.innerHeight;
   renderer.setSize(W, H);
   camera.aspect = W / H;
   camera.updateProjectionMatrix();
-  const w = Math.floor(W * dpr), h = Math.floor(H * dpr);
+  const ratio = renderer.getPixelRatio();
+  const w = Math.floor(W * ratio), h = Math.floor(H * ratio);
   rtScene.setSize(w, h);
-  rtBright.setSize(w / 2, h / 2);
-  rtBlurA.setSize(w / 2, h / 2);
-  rtBlurB.setSize(w / 2, h / 2);
-  rtBlurC.setSize(w / 4, h / 4);
-  rtBlurD.setSize(w / 4, h / 4);
+  rtBright.setSize(Math.floor(w / 2), Math.floor(h / 2));
+  rtBlurA.setSize(Math.floor(w / 2), Math.floor(h / 2));
+  rtBlurB.setSize(Math.floor(w / 2), Math.floor(h / 2));
+  rtBlurC.setSize(Math.floor(w / 4), Math.floor(h / 4));
+  rtBlurD.setSize(Math.floor(w / 4), Math.floor(h / 4));
   finalMat.uniforms.uRes.value.set(w, h);
 }
 window.addEventListener('resize', resize);
 
-/* --------------------------------------------------------------- capture --- */
+/* ------------------------------------------------------------------- api --- */
 window.__ready = false;
+window.__api = {
+  duration: DURATION,
+  state: () => ({
+    t: flight, playing, speed, quality,
+    look: { x: look.x, y: look.y }
+  }),
+  seek: (t) => { flight = clamp(t, 0, LOOP_END); updateAt(flight, 0); renderFrame(); },
+  play: () => { playing = true; },
+  pause: () => { playing = false; },
+  toggle: () => (playing = !playing),
+  restart: () => { flight = 0; playing = true; look.x = look.y = lookTarget.x = lookTarget.y = 0; updateAt(0, 0); renderFrame(); },
+  setSpeed: (v) => { speed = clamp(v, 0.1, 4); },
+  setQuality,
+  nudge: (d) => { flight = clamp(flight + d, 0, LOOP_END); updateAt(flight, 0); renderFrame(); }
+};
 window.__setTime = (t) => {
-  window.__pause = true;
-  fTime = t;
-  updateAt(t, 0);
+  playing = false;
+  flight = clamp(t, 0, LOOP_END);
+  look.x = look.y = lookTarget.x = lookTarget.y = 0;
+  updateAt(flight, 0);
   renderFrame();
 };
 window.__stats = () => ({
@@ -54675,18 +54889,143 @@ window.__project = (x, y, z) => {
   return { x: v.x, y: v.y, z: v.z, onScreen: Math.abs(v.x) < 1 && Math.abs(v.y) < 1 && v.z < 1 };
 };
 
+/* ------------------------------------------------------------------ boot --- */
 updateAt(0, 0);
 renderFrame();
 window.__ready = true;
 requestAnimationFrame(tick);
 
-}
+};
 /* ===================== generated scenery ends ======================= */
 
-requestAnimationFrame(() => {
-  const v = document.getElementById('veil');
-  if (v) v.classList.add('gone');
-});
+requestAnimationFrame(() => setTimeout(() => {
+  try {
+    window.__startApp();
+  } catch (err) {
+    const l = document.getElementById('loading');
+    if (l) l.innerHTML = '<div id="error"><h2>Não foi possível iniciar o voo.</h2><p>' + (err && err.message ? err.message : err) + '</p><p>Use um navegador atual com WebGL 2 e aceleração de hardware.</p></div>';
+    console.error(err);
+  }
+}, 60));
+</script>
+
+<script>
+(function () {
+  'use strict';
+  const $ = id => document.getElementById(id);
+  const CHAPTERS = [[0, 'APROXIMAÇÃO'], [12, 'CATEDRAL'], [33, 'ESPLANADA'], [52, 'CONGRESSO']];
+  const api = () => window.__api || null;
+  let seekHeld = false, lastPlaying = null, toastTimer = null;
+
+  const fmt = t => Math.floor(t / 60) + ':' + String(Math.floor(t % 60)).padStart(2, '0');
+  const chapterAt = t => { let q = 0; for (let i = 0; i < CHAPTERS.length; i++) if (t >= CHAPTERS[i][0]) q = i; return q; };
+
+  function toast(msg) {
+    const el = $('toast');
+    el.textContent = msg;
+    el.style.opacity = 1;
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(() => { el.style.opacity = 0; }, 1800);
+  }
+
+  function syncPlay() {
+    const a = api();
+    const p = a ? a.state().playing : true;
+    $('play-label').textContent = p ? 'Pausar' : 'Continuar';
+    $('pause-icon').innerHTML = p ? '<path d="M8 5v14M16 5v14"/>' : '<path d="m8 5 11 7-11 7Z"/>';
+    $('play').setAttribute('aria-label', p ? 'Pausar voo' : 'Continuar voo');
+  }
+
+  function hud() {
+    const a = api();
+    if (a) {
+      const s = a.state();
+      if (!seekHeld) $('seek').value = s.t;
+      $('seek').max = a.duration;
+      const q = chapterAt(s.t);
+      $('chapter-number').textContent = String(q + 1).padStart(2, '0');
+      $('chapter').textContent = CHAPTERS[q][1];
+      $('time').textContent = fmt(s.t) + ' / ' + fmt(a.duration);
+      if (s.playing !== lastPlaying) { lastPlaying = s.playing; syncPlay(); }
+    }
+    requestAnimationFrame(hud);
+  }
+
+  $('play').onclick = () => { const a = api(); if (a) { a.toggle(); syncPlay(); } };
+  $('restart').onclick = () => { const a = api(); if (a) { a.restart(); syncPlay(); toast('Voo reiniciado'); } };
+  $('hide').onclick = () => document.body.classList.toggle('hidden-ui');
+  $('show-ui').onclick = () => document.body.classList.remove('hidden-ui');
+  $('info').onclick = () => $('about').classList.toggle('off');
+  $('about-close').onclick = () => $('about').classList.add('off');
+
+  $('seek').addEventListener('pointerdown', () => { seekHeld = true; });
+  window.addEventListener('pointerup', () => { seekHeld = false; });
+  $('seek').addEventListener('input', e => { const a = api(); if (a) a.seek(Number(e.target.value)); });
+  $('seek').addEventListener('change', e => { const a = api(); if (a) a.seek(Number(e.target.value)); });
+
+  $('speed').onchange = e => { const a = api(); if (a) a.setSpeed(Number(e.target.value)); };
+  $('quality').onchange = e => {
+    const a = api(); if (!a) return;
+    a.setQuality(e.target.value);
+    toast('Qualidade: ' + e.target.options[e.target.selectedIndex].text);
+  };
+
+  async function fullscreen() {
+    try {
+      if (document.fullscreenElement) await document.exitFullscreen();
+      else await document.documentElement.requestFullscreen();
+    } catch (e) { toast('Tela cheia indisponível neste navegador.'); }
+  }
+  $('fullscreen').onclick = fullscreen;
+
+  let audioCtx = null, windGain = null, audioOn = false;
+  async function toggleSound() {
+    try {
+      if (!audioCtx) {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        audioCtx = new AC();
+        const len = audioCtx.sampleRate * 6;
+        const buf = audioCtx.createBuffer(2, len, audioCtx.sampleRate);
+        for (let ch = 0; ch < 2; ch++) {
+          let b0 = 0;
+          const data = buf.getChannelData(ch);
+          for (let k = 0; k < len; k++) { b0 = (b0 + 0.017 * (Math.random() * 2 - 1)) / 1.017; data[k] = b0 * 3.2; }
+        }
+        const src = audioCtx.createBufferSource();
+        src.buffer = buf; src.loop = true;
+        const low = audioCtx.createBiquadFilter(); low.type = 'lowpass'; low.frequency.value = 540;
+        const high = audioCtx.createBiquadFilter(); high.type = 'highpass'; high.frequency.value = 80;
+        windGain = audioCtx.createGain(); windGain.gain.value = 0;
+        src.connect(low); low.connect(high); high.connect(windGain); windGain.connect(audioCtx.destination);
+        src.start();
+      }
+      await audioCtx.resume();
+      audioOn = !audioOn;
+      windGain.gain.setTargetAtTime(audioOn ? 0.3 : 0, audioCtx.currentTime, 0.4);
+      $('sound').setAttribute('aria-pressed', String(audioOn));
+      $('sound').innerHTML = audioOn
+        ? '<svg viewBox="0 0 24 24"><path d="M11 4 6 8H3v8h3l5 4ZM16 8a6 6 0 0 1 0 8m3-11a10 10 0 0 1 0 14"/></svg>'
+        : '<svg viewBox="0 0 24 24"><path d="M11 4 6 8H3v8h3l5 4ZM16 9l5 6m0-6-5 6"/></svg>';
+    } catch (e) { toast('Áudio indisponível neste navegador.'); }
+  }
+  $('sound').onclick = toggleSound;
+
+  window.addEventListener('keydown', e => {
+    if (e.target && /input|select|textarea/i.test(e.target.tagName)) return;
+    const a = api();
+    if (e.code === 'Space') { e.preventDefault(); if (a) { a.toggle(); syncPlay(); } }
+    else if (e.key === 'r' || e.key === 'R') { if (a) { a.restart(); syncPlay(); } }
+    else if (e.key === 'h' || e.key === 'H') document.body.classList.toggle('hidden-ui');
+    else if (e.key === 'f' || e.key === 'F') fullscreen();
+    else if (e.key === 'm' || e.key === 'M') toggleSound();
+    else if (e.key === 'Escape') $('about').classList.add('off');
+    else if (e.key === 'ArrowRight') { if (a) a.nudge(3); }
+    else if (e.key === 'ArrowLeft') { if (a) a.nudge(-3); }
+  });
+
+  syncPlay();
+  hud();
+})();
 </script>
 </body>
 </html>
