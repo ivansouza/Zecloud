@@ -94,8 +94,8 @@ h1{font-family:Georgia,'Times New Roman',serif;font-weight:400;font-size:clamp(3
   <div>
     <div id="chapter-line"><span class="chapter-number" id="chapter-number">01</span><span id="chapter">APROXIMAÇÃO</span></div>
     <div id="timeline">
-      <input id="seek" type="range" min="0" max="68" step="0.05" value="0" aria-label="Posição do voo">
-      <span id="time">0:00 / 1:08</span>
+      <input id="seek" type="range" min="0" max="74" step="0.05" value="0" aria-label="Posição do voo">
+      <span id="time">0:00 / 1:14</span>
     </div>
   </div>
   <div id="actions">
@@ -53854,6 +53854,17 @@ const LAND_Y = { grass: 0.12, wood: 0.12, pitch: 0.12, water: 0.10 };
 /* -------------------------------------------------------------- buildings --- */
 const finInstances = [];
 
+/* footprints replaced by hand-built palaces (Planalto, Itamaraty, STF) */
+const PALACES = [
+  { x: 1472.7, z: 163.0, skip: 44, minArea: 2500 },
+  { x: 770.8, z: 354.2, skip: 42, minArea: 2500 },
+  { x: 1354.8, z: 518.3, skip: 42, minArea: 2000 }
+];
+function isPalaceFootprint(cx, cz, area) {
+  for (const p of PALACES) if (area >= p.minArea && Math.hypot(cx - p.x, cz - p.z) < p.skip) return true;
+  return false;
+}
+
 (function buildings() {
   const walls = { pos: [], nrm: [], uv: [], col: [], idx: [] };
   const roofs = { pos: [], nrm: [], uv: [], col: [], idx: [] };
@@ -53868,6 +53879,7 @@ const finInstances = [];
     cx /= n; cz /= n;
     if (Math.hypot(cx - CATH_P.x, cz - CATH_P.y) < skipCath) continue;
     if (b.h > 90 && Math.hypot(cx - CONG_P.x, cz - CONG_P.y) < 60) continue;
+    if (isPalaceFootprint(cx, cz, b.a)) continue;
 
     const h = b.h;
     const ministry = b.k === 'ministry';
@@ -53888,14 +53900,18 @@ const finInstances = [];
       const len = Math.hypot(dx, dz);
       if (len < 0.15) continue;
       const nx = dz / len, nz = -dx / len;
-      const base = walls.pos.length / 3;
-      // v0 = A0, v1 = B0, v2 = B1, v3 = A1
-      walls.pos.push(x0, 0, z0, x1, 0, z1, x1, h, z1, x0, h, z0);
-      for (let k = 0; k < 4; k++) {
-        walls.nrm.push(nx, 0, nz);
-        walls.col.push(tint.r, tint.g, tint.b);
-      }
-      walls.uv.push(run, 0, run + len, 0, run + len, h, run, h);
+      const yBase = Math.min(4.2, h * 0.4);
+      const shade = new Color(tint.r * 0.55, tint.g * 0.55, tint.b * 0.55);
+      let base = walls.pos.length / 3;
+      walls.pos.push(x0, 0, z0, x1, 0, z1, x1, yBase, z1, x0, yBase, z0);
+      for (let k = 0; k < 4; k++) { walls.nrm.push(nx, 0, nz); walls.col.push(shade.r, shade.g, shade.b); }
+      walls.uv.push(run, 0, run + len, 0, run + len, yBase, run, yBase);
+      walls.idx.push(base, base + 2, base + 1, base, base + 3, base + 2);
+
+      base = walls.pos.length / 3;
+      walls.pos.push(x0, yBase, z0, x1, yBase, z1, x1, h, z1, x0, h, z0);
+      for (let k = 0; k < 4; k++) { walls.nrm.push(nx, 0, nz); walls.col.push(tint.r, tint.g, tint.b); }
+      walls.uv.push(run, yBase, run + len, yBase, run + len, h, run, h);
       walls.idx.push(base, base + 2, base + 1, base, base + 3, base + 2);
       run += len;
 
@@ -54280,6 +54296,202 @@ const TOWARD_AXIS = new Vector2(A.uz, -A.ux);        // unit vector from the cat
 
 
 /* =========================================================================
+   Part 4: the palaces around the Praça, traffic on the real road network
+   ========================================================================= */
+
+/* ------------------------------------------------------------- PLANALTO --- */
+(function planalto() {
+  const g = new Group();
+  g.position.set(1472.7, 0, 163.0);
+  g.rotation.y = AXIS_ANGLE;          // long axis parallel to the Eixo
+  world.add(g);
+
+  // terrace + water mirror on the Praça side
+  box(120, 1.2, 74, MAT.stone, 0, 0.6, 0, g);
+  box(74, 0.5, 24, MAT.marble, 4, 1.35, 40, g);
+  planeXZ(70, 20, MAT.water, 4, 1.5, 40, g);
+
+  // raised slab the palace sits on
+  box(84, 1.0, 34, MAT.marble, 0, 4.4, 0, g);
+
+  // ground floor glass, set back behind the columns
+  box(78, 3.4, 24, MAT.glassDark, 0, 7.2, -2, g);
+
+  // colonnade on the front (local +Z faces the Praça)
+  for (let i = 0; i < 10; i++) {
+    const c = new Mesh(new CylinderGeometry(0.34, 0.4, 7.0, 12), MAT.marble);
+    c.position.set(-31 + i * 6.9, 8.0, 13.5);
+    c.castShadow = true; c.receiveShadow = true;
+    g.add(c);
+  }
+  box(70, 0.7, 3.2, MAT.marble, 0, 11.7, 13.5, g);   // canopy over the columns
+
+  // upper volume + deep roof
+  box(72, 7.4, 19, MAT.glassTower, 0, 14.5, -3, g);
+  box(88, 1.0, 30, MAT.marble, 0, 18.9, -3, g);
+  box(90, 0.45, 32, MAT.marble, 0, 18.2, -3, g);
+  for (let i = 0; i < 24; i++) {
+    box(0.16, 0.8, 8, MAT.marble, -36 + i * 3.1, 18.5, 9.5, g);
+  }
+
+  // side wings
+  for (const s of [-1, 1]) {
+    box(16, 9.5, 26, MAT.marble, s * 50, 6.4, -6, g);
+    box(17, 1.0, 27, MAT.marble, s * 50, 11.4, -6, g);
+  }
+
+  // access ramp on the west side
+  const ramp = new Mesh(new BoxGeometry(30, 0.8, 52), MAT.marble);
+  ramp.position.set(-52, 2.6, 20);
+  ramp.rotation.x = -0.05;
+  ramp.castShadow = true; ramp.receiveShadow = true;
+  g.add(ramp);
+  for (const s of [-1, 1]) {
+    const bal = new Mesh(new BoxGeometry(0.3, 2.0, 52), MAT.marble);
+    bal.position.set(-52 + s * 15, 3.5, 20);
+    bal.rotation.x = -0.05;
+    g.add(bal);
+  }
+})();
+
+/* ------------------------------------------------------------- ITAMARATY --- */
+(function itamaraty() {
+  const g = new Group();
+  g.position.set(770.8, 0, 354.2);
+  g.rotation.y = AXIS_ANGLE;
+  world.add(g);
+
+  // podium + the famous water mirror along the front
+  box(110, 1.0, 60, MAT.stone, 0, 0.5, 0, g);
+  box(92, 0.5, 20, MAT.marble, 0, 1.2, 26, g);
+  planeXZ(88, 16, MAT.water, 0, 1.45, 26, g);
+
+  // main block, two storeys behind an arcade
+  box(86, 8.5, 26, MAT.glassDark, 0, 5.5, -4, g);
+  box(94, 1.2, 34, MAT.marble, 0, 10.6, -4, g);
+  box(96, 0.5, 36, MAT.marble, 0, 9.9, -4, g);
+
+  // arcade: columns and shallow arches along the front
+  for (let i = 0; i < 14; i++) {
+    const x = -39 + i * 6;
+    const c = new Mesh(new CylinderGeometry(0.32, 0.36, 7.2, 10), MAT.marble);
+    c.position.set(x, 3.6, 9.5);
+    c.castShadow = true;
+    g.add(c);
+    const arch = new Mesh(new TorusGeometry(3.0, 0.22, 5, 14, Math.PI), MAT.marble);
+    arch.position.set(x + 3, 7.0, 9.5);
+    arch.rotation.z = Math.PI;
+    g.add(arch);
+  }
+  box(86, 0.8, 3.4, MAT.marble, 0, 7.2, 9.5, g);
+
+  // annexes
+  box(34, 9, 22, MAT.marble, -62, 4.5, -6, g);
+  box(34, 9, 22, MAT.marble, 62, 4.5, -6, g);
+})();
+
+/* ------------------------------------------------------------------ STF ---- */
+(function stf() {
+  const g = new Group();
+  g.position.set(1354.8, 0, 518.3);
+  g.rotation.y = AXIS_ANGLE;
+  world.add(g);
+
+  box(120, 1.0, 80, MAT.stone, 0, 0.5, 0, g);
+  box(96, 1.2, 46, MAT.marble, 0, 2.2, 0, g);
+  box(90, 10, 28, MAT.glassTower, 0, 7.8, -2, g);
+  box(100, 1.2, 36, MAT.marble, 0, 13.4, -2, g);
+
+  for (let i = 0; i < 16; i++) {
+    const c = new Mesh(new CylinderGeometry(0.3, 0.34, 8.8, 10), MAT.marble);
+    c.position.set(-42 + i * 5.6, 6.9, 12);
+    c.castShadow = true;
+    g.add(c);
+  }
+  box(96, 0.6, 2.6, MAT.marble, 0, 11.4, 12, g);
+  box(60, 6, 30, MAT.marble, 0, 3.6, -26, g);
+})();
+
+/* ----------------------------------------------------------------- cars ---- */
+const traffic = { paths: [], cars: [], bodies: null, cabins: null };
+
+(function buildTraffic() {
+  // use the main carriageways and avenues, longest first
+  const cand = OSM.roads
+    .filter(r => r.w >= 12 && r.p.length >= 8)
+    .map(r => {
+      let len = 0;
+      for (let i = 0; i + 3 < r.p.length; i += 2) len += Math.hypot(r.p[i + 2] - r.p[i], r.p[i + 3] - r.p[i + 1]);
+      return { r, len };
+    })
+    .filter(o => o.len > 220)
+    .sort((a, b) => b.len - a.len)
+    .slice(0, 26);
+
+  if (!cand.length) return;
+  for (const { r, len } of cand) {
+    const cum = [0];
+    let acc = 0;
+    for (let i = 0; i + 3 < r.p.length; i += 2) {
+      acc += Math.hypot(r.p[i + 2] - r.p[i], r.p[i + 3] - r.p[i + 1]);
+      cum.push(acc);
+    }
+    traffic.paths.push({ pts: r.p, cum, len: acc, w: r.w });
+  }
+
+  const N = 140;
+  const bodyGeo = new BoxGeometry(4.3, 1.2, 1.9); bodyGeo.translate(0, 0.85, 0);
+  const cabinGeo = new BoxGeometry(2.3, 0.8, 1.72); cabinGeo.translate(-0.25, 1.8, 0);
+  const bodyMat = new MeshStandardMaterial({ color: 0xffffff, metalness: 0.55, roughness: 0.42, envMapIntensity: 1.0 });
+  const cabinMat = new MeshStandardMaterial({ color: 0x0e1216, metalness: 0.9, roughness: 0.14, envMapIntensity: 1.3 });
+  const bodies = new InstancedMesh(bodyGeo, bodyMat, N);
+  const cabins = new InstancedMesh(cabinGeo, cabinMat, N);
+  bodies.castShadow = cabins.castShadow = true;
+  const palette = [0xf2f2ee, 0xdedede, 0x9aa0a6, 0x2f3237, 0x1b1d20, 0xb43a32, 0x2c4f7c, 0xe8e2d2];
+  const col = new Color();
+  for (let i = 0; i < N; i++) {
+    const p = traffic.paths[Math.floor(Math.random() * traffic.paths.length)];
+    traffic.cars.push({
+      p, d: Math.random() * p.len, v: (14 + Math.random() * 16) * (Math.random() < 0.5 ? 1 : -1),
+      lane: (Math.random() < 0.5 ? 1 : -1) * (2.5 + Math.random() * 2.5)
+    });
+    col.setHex(palette[Math.floor(Math.random() * palette.length)]);
+    bodies.setColorAt(i, col);
+  }
+  world.add(bodies, cabins);
+  traffic.bodies = bodies; traffic.cabins = cabins;
+})();
+
+const _tm = new Matrix4();
+function updateTraffic(dt) {
+  if (!traffic.bodies) return;
+  for (let i = 0; i < traffic.cars.length; i++) {
+    const c = traffic.cars[i];
+    c.d += c.v * dt;
+    if (c.d > c.p.len) c.d -= c.p.len;
+    if (c.d < 0) c.d += c.p.len;
+    // locate segment
+    const cum = c.p.cum, pts = c.p.pts;
+    let lo = 0, hi = cum.length - 1;
+    while (lo < hi - 1) { const mid = (lo + hi) >> 1; if (cum[mid] <= c.d) lo = mid; else hi = mid; }
+    const segLen = Math.max(0.001, cum[lo + 1] - cum[lo]);
+    const t = (c.d - cum[lo]) / segLen;
+    const x0 = pts[lo * 2], z0 = pts[lo * 2 + 1], x1 = pts[lo * 2 + 2], z1 = pts[lo * 2 + 3];
+    const x = x0 + (x1 - x0) * t, z = z0 + (z1 - z0) * t;
+    const dx = (x1 - x0) / segLen, dz = (z1 - z0) / segLen;
+    const nx = -dz, nz = dx;
+    _tm.makeRotationY(Math.atan2(-dz, dx));
+    _tm.setPosition(x + nx * c.lane, 0.3, z + nz * c.lane);
+    traffic.bodies.setMatrixAt(i, _tm);
+    traffic.cabins.setMatrixAt(i, _tm);
+  }
+  traffic.bodies.instanceMatrix.needsUpdate = true;
+  traffic.cabins.instanceMatrix.needsUpdate = true;
+}
+
+
+
+/* =========================================================================
    Part 3: environment light, post-processing, camera choreography, loop
    ========================================================================= */
 
@@ -54461,9 +54673,12 @@ const KEYS = [
   { t: 54,   p: P(1150, 0, 96),     l: P(1600, 20, 42),   fov: 40 },
   { t: 58,   p: P(1380, -30, 104),  l: P(1887, -30, 45),  fov: 38 },
   { t: 62,   p: P(1470, -60, 116),  l: P(1887, -30, 48),  fov: 36 },
-  { t: 66,   p: P(1530, -85, 126),  l: P(1887, -30, 48),  fov: 35 }
+  { t: 66,   p: P(1530, -85, 126),  l: P(1887, -30, 48),  fov: 35 },
+  { t: 69,   p: P(1900, 30, 92),    l: P(2110, -40, 46),  fov: 40 },
+  { t: 71.5, p: P(2150, 120, 110),  l: P(2260, 0, 48),    fov: 42 },
+  { t: 74,   p: P(2335, 70, 138),   l: P(1990, -80, 55),  fov: 44 }
 ];
-const DURATION = 68;
+const DURATION = 74;
 const HOLD = 2.5;
 
 const _v0 = new Vector3(), _v1 = new Vector3(), _v2 = new Vector3(), _v3 = new Vector3(), _out = new Vector3();
@@ -54577,6 +54792,7 @@ function updateAt(t, dt) {
   updateCamera(t);
   skyMesh.position.copy(camera.position);
   updateSunShadow();
+  updateTraffic(dt);
 
   const fadeIn = smoothstep(0, 1.2, t);
   const fadeOut = 1.0 - smoothstep(DURATION - 0.4, DURATION + HOLD, t);
@@ -54618,7 +54834,7 @@ function renderFrame() {
 }
 
 /* ------------------------------------------------------------- playback --- */
-const CHAPTERS = [[0, 'APROXIMAÇÃO'], [26, 'CATEDRAL'], [47, 'ESPLANADA'], [58, 'CONGRESSO']];
+const CHAPTERS = [[0, 'APROXIMAÇÃO'], [26, 'CATEDRAL'], [47, 'ESPLANADA'], [58, 'CONGRESSO'], [68, 'PRAÇA']];
 const LOOP_END = DURATION + HOLD;
 
 let flight = 0;
@@ -54795,7 +55011,7 @@ requestAnimationFrame(() => setTimeout(() => {
 (function () {
   'use strict';
   const $ = id => document.getElementById(id);
-  const CHAPTERS = [[0, 'APROXIMAÇÃO'], [26, 'CATEDRAL'], [47, 'ESPLANADA'], [58, 'CONGRESSO']];
+  const CHAPTERS = [[0, 'APROXIMAÇÃO'], [26, 'CATEDRAL'], [47, 'ESPLANADA'], [58, 'CONGRESSO'], [68, 'PRAÇA']];
   const api = () => window.__api || null;
   let seekHeld = false, lastPlaying = null, toastTimer = null;
 
